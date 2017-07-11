@@ -10,6 +10,7 @@
 #include "zpool.h"
 #include "zfs.h"
 
+#define verify(EX)  ((void)(EX))
 
 dataset_list_t *create_dataset_list_item() {
 	dataset_list_t *zlist = malloc(sizeof(dataset_list_t));
@@ -99,7 +100,7 @@ int read_user_property(zfs_handle_t *zh, property_list_t *list, const char *prop
 	char *strval;
 	char *sourceval;
 	// char source[ZFS_MAX_DATASET_NAME_LEN];
-	
+
 	if (nvlist_lookup_nvlist(user_props,
 		prop, &propval) != 0) {
 		sourcetype = ZPROP_SRC_NONE;
