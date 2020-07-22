@@ -1081,7 +1081,7 @@ func (pool *Pool) Scrub(cmd PoolScrubCmd) (err error) {
 	var scrubCmd C.pool_scrub_cmd_t = C.POOL_SCRUB_NORMAL
 
 	switch cmd {
-        case PoolScrubStart:
+	case PoolScrubStart:
 	case PoolScrubStop:
 		scanType = C.POOL_SCAN_NONE
 	case PoolScrubPause:
