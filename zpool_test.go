@@ -2,11 +2,10 @@ package zfs_test
 
 import (
 	"fmt"
+	"github.com/RealImage/go-libzfs"
 	"io/ioutil"
 	"os"
 	"testing"
-
-	"github.com/bicomsystems/go-libzfs"
 )
 
 /* ------------------------------------------------------------------------- */
