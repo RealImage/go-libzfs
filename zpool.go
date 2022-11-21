@@ -115,6 +115,7 @@ type PoolScanStat struct {
 	// Values not stored on disk
 	PassExam  uint64 // Examined bytes per scan pass
 	PassStart uint64 // Start time of scan pass
+	PassPause uint64 // Pause time
 }
 
 // VDevTree ZFS virtual device tree
@@ -228,6 +229,7 @@ func poolGetConfig(name string, nv C.nvlist_ptr) (vdevs VDevTree, err error) {
 		vdevs.ScanStat.Errors = uint64(ps.pss_errors)
 		vdevs.ScanStat.PassExam = uint64(ps.pss_pass_exam)
 		vdevs.ScanStat.PassStart = uint64(ps.pss_pass_start)
+		vdevs.ScanStat.PassPause = uint64(ps.pss_pass_scrub_pause)
 	}
 
 	// Fetch the children
