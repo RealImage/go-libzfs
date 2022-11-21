@@ -59,6 +59,15 @@ const (
 	PoolScanFuncs           // Number of scan functions
 )
 
+// Scub options
+type PoolScrubCmd int
+
+const (
+	PoolScrubStop PoolScrubCmd = iota // Stop ongoing scrubbing
+	PoolScrubStart
+	PoolScrubPause
+)
+
 // PoolInitializeAction type representing pool initialize action
 type PoolInitializeAction int
 
@@ -1084,6 +1093,40 @@ func (pool *Pool) VDevTree() (vdevs VDevTree, err error) {
 	}
 	vdevs.Spares, err = poolGetSpares(poolName, nvroot)
 	vdevs.L2Cache, err = poolGetL2Cache(poolName, nvroot)
+	return
+}
+
+// Scrub starts/stop/pause scrubbing operation on zpool.
+func (pool *Pool) Scrub(cmd PoolScrubCmd) (err error) {
+
+	state, err := pool.State()
+	if err != nil {
+		return
+	}
+
+	if state == PoolStateUnavail {
+		err = fmt.Errorf("cannot scan %s : pool is currently unavailable", pool.Properties[PoolPropName].Value)
+		return
+	}
+
+	var scanType C.pool_scan_func_t = C.POOL_SCAN_SCRUB
+	var scrubCmd C.pool_scrub_cmd_t = C.POOL_SCRUB_NORMAL
+
+	switch cmd {
+	case PoolScrubStart:
+	case PoolScrubStop:
+		scanType = C.POOL_SCAN_NONE
+	case PoolScrubPause:
+		scrubCmd = C.POOL_SCRUB_PAUSE
+	default:
+		err = fmt.Errorf("invalid scrub option %d", cmd)
+		return
+	}
+
+	if rc := C.zpool_scan(pool.list.zph, scanType, scrubCmd); rc != 0 {
+		err = LastError()
+	}
+
 	return
 }
 
