@@ -90,80 +90,99 @@ char *sZPOOL_CONFIG_REWIND_TIME = ZPOOL_CONFIG_REWIND_TIME;
 
 static char _lasterr_[1024];
 
-const char *lasterr(void) {
+const char *lasterr(void)
+{
 	return _lasterr_;
 }
 
-zpool_list_t *create_zpool_list_item() {
+zpool_list_t *create_zpool_list_item()
+{
 	zpool_list_t *zlist = malloc(sizeof(zpool_list_t));
 	memset(zlist, 0, sizeof(zpool_list_t));
 	return zlist;
 }
 
-int zpool_list_callb(zpool_handle_t *pool, void *data) {
-	zpool_list_t **lroot = (zpool_list_t**)data;
+int zpool_list_callb(zpool_handle_t *pool, void *data)
+{
+	zpool_list_t **lroot = (zpool_list_t **)data;
 	zpool_list_t *nroot = create_zpool_list_item();
 
-	if ( !((*lroot)->zph) ) {
+	if (!((*lroot)->zph))
+	{
 		(*lroot)->zph = pool;
-	} else {
+	}
+	else
+	{
 		nroot->zph = pool;
-		nroot->pnext = (void*)*lroot;
+		nroot->pnext = (void *)*lroot;
 		*lroot = nroot;
 	}
 	return 0;
 }
 
-zpool_list_ptr zpool_list_openall() {
+zpool_list_ptr zpool_list_openall()
+{
 	int err = 0;
 	zpool_list_t *zlist = create_zpool_list_item();
 	err = zpool_iter(libzfsHandle, zpool_list_callb, &zlist);
-	if ( err != 0 || zlist->zph == NULL ) {
+	if (err != 0 || zlist->zph == NULL)
+	{
 		zpool_list_free(zlist);
 		zlist = NULL;
 	}
 	return zlist;
 }
 
-zpool_list_t* zpool_list_open(const char *name) {
+zpool_list_t *zpool_list_open(const char *name)
+{
 	zpool_list_t *zlist = create_zpool_list_item();
 	zlist->zph = zpool_open(libzfsHandle, name);
-	if ( zlist->zph ) {
+	if (zlist->zph)
+	{
 		return zlist;
-	} else {
+	}
+	else
+	{
 		zpool_list_free(zlist);
 	}
 	return 0;
 }
 
-zpool_list_t *zpool_next(zpool_list_t *pool) {
+zpool_list_t *zpool_next(zpool_list_t *pool)
+{
 	return pool->pnext;
 }
 
-void zpool_list_free(zpool_list_t *list) {
+void zpool_list_free(zpool_list_t *list)
+{
 	zpool_list_ptr next;
-	while(list) {
+	while (list)
+	{
 		next = list->pnext;
 		free(list);
 		list = next;
 	}
 }
 
-void zpool_list_close(zpool_list_t *pool) {
+void zpool_list_close(zpool_list_t *pool)
+{
 	zpool_close(pool->zph);
 	zpool_list_free(pool);
 }
 
-property_list_t *next_property(property_list_t *list) {
-	if (list != 0) {
+property_list_t *next_property(property_list_t *list)
+{
+	if (list != 0)
+	{
 		return list->pnext;
 	}
 	return list;
 }
 
-
-void zprop_source_tostr(char *dst, zprop_source_t source) {
-	switch (source) {
+void zprop_source_tostr(char *dst, zprop_source_t source)
+{
+	switch (source)
+	{
 	case ZPROP_SRC_NONE:
 		strcpy(dst, "none");
 		break;
@@ -185,19 +204,22 @@ void zprop_source_tostr(char *dst, zprop_source_t source) {
 	}
 }
 
-
-property_list_ptr read_zpool_property(zpool_list_ptr pool, int prop) {
+property_list_ptr read_zpool_property(zpool_list_ptr pool, int prop)
+{
 
 	int r = 0;
 	zprop_source_t source;
 	property_list_ptr list = new_property_list();
 
 	r = zpool_get_prop(pool->zph, prop,
-		list->value, INT_MAX_VALUE, &source, B_TRUE);
-	if (r == 0) {
+					   list->value, INT_MAX_VALUE, &source, B_TRUE);
+	if (r == 0)
+	{
 		// strcpy(list->name, zpool_prop_to_name(prop));
 		zprop_source_tostr(list->source, source);
-	} else {
+	}
+	else
+	{
 		free_properties(list);
 		return NULL;
 	}
@@ -205,12 +227,14 @@ property_list_ptr read_zpool_property(zpool_list_ptr pool, int prop) {
 	return list;
 }
 
-property_list_ptr read_append_zpool_property(zpool_list_ptr pool, property_list_ptr proot, zpool_prop_t prop) {
+property_list_ptr read_append_zpool_property(zpool_list_ptr pool, property_list_ptr proot, zpool_prop_t prop)
+{
 	int r = 0;
 	property_list_t *newitem = NULL;
 
 	newitem = read_zpool_property(pool, prop);
-	if (newitem == NULL) {
+	if (newitem == NULL)
+	{
 		return proot;
 	}
 	// printf("p: %s %s %s\n", newitem->name, newitem->value, newitem->source);
@@ -220,7 +244,8 @@ property_list_ptr read_append_zpool_property(zpool_list_ptr pool, property_list_
 	return proot;
 }
 
-property_list_t *read_zpool_properties(zpool_list_ptr pool) {
+property_list_t *read_zpool_properties(zpool_list_ptr pool)
+{
 	// read pool name as first property
 	property_list_t *root = NULL, *list = NULL;
 
@@ -259,12 +284,13 @@ property_list_t *read_zpool_properties(zpool_list_ptr pool) {
 	return root;
 }
 
-pool_state_t zpool_read_state(zpool_handle_t *zh) {
+pool_state_t zpool_read_state(zpool_handle_t *zh)
+{
 	return zpool_get_state(zh);
 }
 
-
-const char *gettext(const char *txt) {
+const char *gettext(const char *txt)
+{
 	return txt;
 }
 /*
@@ -311,7 +337,6 @@ const char *gettext(const char *txt) {
 // 		// 	return (2);
 // 		// }
 
-
 // 		if (zpool_prop_feature(propname))
 // 			normnm = propname;
 // 		else
@@ -340,19 +365,23 @@ const char *gettext(const char *txt) {
 // 	return (0);
 // }
 
-nvlist_t** nvlist_alloc_array(int count) {
-	return malloc(count*sizeof(nvlist_t*));
+nvlist_t **nvlist_alloc_array(int count)
+{
+	return malloc(count * sizeof(nvlist_t *));
 }
 
-void nvlist_array_set(nvlist_t** a, int i, nvlist_t *item) {
+void nvlist_array_set(nvlist_t **a, int i, nvlist_t *item)
+{
 	a[i] = item;
 }
 
-void nvlist_free_array(nvlist_t **a) {
+void nvlist_free_array(nvlist_t **a)
+{
 	free(a);
 }
 
-nvlist_t *nvlist_array_at(nvlist_t **a, uint_t i) {
+nvlist_t *nvlist_array_at(nvlist_t **a, uint_t i)
+{
 	return a[i];
 }
 
@@ -360,144 +389,170 @@ int refresh_stats(zpool_list_t *pool)
 {
 	boolean_t missing;
 	int err = zpool_refresh_stats(pool->zph, &missing);
-	if ( err != 0 ) {
+	if (err != 0)
+	{
 		return err;
 	}
-	if ( missing == B_TRUE ) {
+	if (missing == B_TRUE)
+	{
 		return -1;
 	}
 	return 0;
 }
 
-const char *get_vdev_type(nvlist_ptr nv) {
-	char *value = NULL;
+const char *get_vdev_type(nvlist_ptr nv)
+{
+	const char *value = NULL;
 	int r = nvlist_lookup_string(nv, ZPOOL_CONFIG_TYPE, &value);
-	if(r != 0) {
+	if (r != 0)
+	{
 		return NULL;
 	}
 	return value;
 }
 
-uint64_t get_vdev_guid(nvlist_ptr nv) {
+uint64_t get_vdev_guid(nvlist_ptr nv)
+{
 	uint64_t value = 0;
 	nvlist_lookup_uint64(nv, ZPOOL_CONFIG_GUID, &value);
 	return value;
 }
 
-const vdev_stat_ptr get_vdev_stats(nvlist_ptr nv) {
+const vdev_stat_ptr get_vdev_stats(nvlist_ptr nv)
+{
 	vdev_stat_ptr vs = NULL;
 	uint_t count;
-	int r = nvlist_lookup_uint64_array(nv, ZPOOL_CONFIG_VDEV_STATS, (uint64_t**)&vs, &count);
-	if(r != 0) {
+	int r = nvlist_lookup_uint64_array(nv, ZPOOL_CONFIG_VDEV_STATS, (uint64_t **)&vs, &count);
+	if (r != 0)
+	{
 		return NULL;
 	}
 	return vs;
 }
 
-pool_scan_stat_ptr get_vdev_scan_stats(nvlist_t *nv) {
+pool_scan_stat_ptr get_vdev_scan_stats(nvlist_t *nv)
+{
 	pool_scan_stat_ptr vds = NULL;
 	uint_t c;
-	int r = nvlist_lookup_uint64_array(nv, ZPOOL_CONFIG_SCAN_STATS, (uint64_t**)&vds, &c);
-	if(r != 0) {
+	int r = nvlist_lookup_uint64_array(nv, ZPOOL_CONFIG_SCAN_STATS, (uint64_t **)&vds, &c);
+	if (r != 0)
+	{
 		return NULL;
 	}
 	return vds;
 }
 
-vdev_children_ptr get_vdev_children(nvlist_t *nv) {
+vdev_children_ptr get_vdev_children(nvlist_t *nv)
+{
 	int r;
 	vdev_children_ptr children = malloc(sizeof(vdev_children_t));
 	memset(children, 0, sizeof(vdev_children_t));
 	r = nvlist_lookup_nvlist_array(nv, ZPOOL_CONFIG_CHILDREN, &(children->first), &(children->count));
-	if (r != 0) {
+	if (r != 0)
+	{
 		free(children);
 		return NULL;
 	}
 	return children;
 }
 
-vdev_children_ptr get_vdev_spares(nvlist_t *nv) {
+vdev_children_ptr get_vdev_spares(nvlist_t *nv)
+{
 	int r;
 	vdev_children_ptr children = malloc(sizeof(vdev_children_t));
 	memset(children, 0, sizeof(vdev_children_t));
 	r = nvlist_lookup_nvlist_array(nv, ZPOOL_CONFIG_SPARES, &(children->first), &(children->count));
-	if (r != 0) {
+	if (r != 0)
+	{
 		free(children);
 		return NULL;
 	}
 	return children;
 }
 
-vdev_children_ptr get_vdev_l2cache(nvlist_t *nv) {
+vdev_children_ptr get_vdev_l2cache(nvlist_t *nv)
+{
 	int r;
 	vdev_children_ptr children = malloc(sizeof(vdev_children_t));
 	memset(children, 0, sizeof(vdev_children_t));
 	r = nvlist_lookup_nvlist_array(nv, ZPOOL_CONFIG_L2CACHE, &(children->first), &(children->count));
-	if (r != 0) {
+	if (r != 0)
+	{
 		free(children);
 		return NULL;
 	}
 	return children;
 }
 
-const char *get_vdev_path(nvlist_ptr nv) {
-	char *path = NULL;
+const char *get_vdev_path(nvlist_ptr nv)
+{
+	const char *path = NULL;
 	uint64_t notpresent = 0;
 	int r = nvlist_lookup_uint64(nv, ZPOOL_CONFIG_NOT_PRESENT, &notpresent);
-	if (r == 0 || notpresent != 0) {
-		if (  0 != nvlist_lookup_string(nv, ZPOOL_CONFIG_PATH, &path) ) {
+	if (r == 0 || notpresent != 0)
+	{
+		if (0 != nvlist_lookup_string(nv, ZPOOL_CONFIG_PATH, &path))
+		{
 			return NULL;
 		}
 	}
 	return path;
 }
 
-uint64_t get_vdev_is_log(nvlist_ptr nv) {
+uint64_t get_vdev_is_log(nvlist_ptr nv)
+{
 	uint64_t islog = B_FALSE;
 	nvlist_lookup_uint64(nv, ZPOOL_CONFIG_IS_LOG, &islog);
 	return islog;
 }
 
-
 // return
-uint64_t get_zpool_state(nvlist_ptr nv) {
+uint64_t get_zpool_state(nvlist_ptr nv)
+{
 	uint64_t state = 0;
 	nvlist_lookup_uint64(nv, ZPOOL_CONFIG_POOL_STATE, &state);
 	return state;
 }
 
-uint64_t get_zpool_guid(nvlist_ptr nv) {
+uint64_t get_zpool_guid(nvlist_ptr nv)
+{
 	uint64_t guid = 0;
 	nvlist_lookup_uint64(nv, ZPOOL_CONFIG_POOL_GUID, &guid);
 	return guid;
 }
 
-const char *get_zpool_name(nvlist_ptr nv) {
-	char *name = NULL;
-	if (0 != nvlist_lookup_string(nv, ZPOOL_CONFIG_POOL_NAME, &name)) {
+const char *get_zpool_name(nvlist_ptr nv)
+{
+	const char *name = NULL;
+	if (0 != nvlist_lookup_string(nv, ZPOOL_CONFIG_POOL_NAME, &name))
+	{
 		return NULL;
 	}
 	return name;
 }
 
-const char *get_zpool_comment(nvlist_ptr nv) {
+const char *get_zpool_comment(nvlist_ptr nv)
+{
 	char *comment = NULL;
-	if (0 != nvlist_lookup_string(nv, ZPOOL_CONFIG_COMMENT, &comment)) {
+	if (0 != nvlist_lookup_string(nv, ZPOOL_CONFIG_COMMENT, &comment))
+	{
 		return NULL;
 	}
 	return comment;
 }
 
-nvlist_ptr get_zpool_vdev_tree(nvlist_ptr nv) {
+nvlist_ptr get_zpool_vdev_tree(nvlist_ptr nv)
+{
 	nvlist_ptr vdev_tree = NULL;
-	if ( 0 != nvlist_lookup_nvlist(nv, ZPOOL_CONFIG_VDEV_TREE,	&vdev_tree) ) {
+	if (0 != nvlist_lookup_nvlist(nv, ZPOOL_CONFIG_VDEV_TREE, &vdev_tree))
+	{
 		return NULL;
 	}
 	return vdev_tree;
 }
 
-
-nvlist_ptr go_zpool_search_import(libzfs_handle_ptr zfsh, int paths, char **path, boolean_t do_scan) {
+nvlist_ptr go_zpool_search_import(libzfs_handle_ptr zfsh, int paths, char **path, boolean_t do_scan)
+{
 	importargs_t idata;
 	memset(&idata, 0, sizeof(importargs_t));
 	nvlist_ptr pools = NULL;
@@ -508,21 +563,25 @@ nvlist_ptr go_zpool_search_import(libzfs_handle_ptr zfsh, int paths, char **path
 	tpool_t *t;
 	t = tpool_create(1, 5 * sysconf(_SC_NPROCESSORS_ONLN), 0, NULL);
 	if (t == NULL)
-			return NULL;
+		return NULL;
 
-	pools = zpool_search_import(zfsh, &idata, &libzfs_config_ops);
+	libpc_handle_t lpch = {
+		.lpc_lib_handle = zfsh,
+		.lpc_ops = &libzfs_config_ops,
+		.lpc_printerr = B_TRUE};
+	pools = zpool_search_import(&lpch, &idata);
 
 	tpool_wait(t);
 	tpool_destroy(t);
 	return pools;
 }
 
-
-int do_zpool_clear(zpool_list_t *pool, const char *device, u_int32_t load_policy) {
+int do_zpool_clear(zpool_list_t *pool, const char *device, u_int32_t load_policy)
+{
 	nvlist_t *policy = NULL;
 	int ret = 0;
 	if (nvlist_alloc(&policy, NV_UNIQUE_NAME, 0) != 0 ||
-	    nvlist_add_uint32(policy, ZPOOL_LOAD_POLICY, load_policy) != 0)
+		nvlist_add_uint32(policy, ZPOOL_LOAD_POLICY, load_policy) != 0)
 		return (1);
 
 	if (zpool_clear(pool->zph, device, policy) != 0)
@@ -533,17 +592,19 @@ int do_zpool_clear(zpool_list_t *pool, const char *device, u_int32_t load_policy
 	return (ret);
 }
 
-void collect_zpool_leaves(zpool_handle_t *zhp, nvlist_t *nvroot, nvlist_t *nv){
+void collect_zpool_leaves(zpool_handle_t *zhp, nvlist_t *nvroot, nvlist_t *nv)
+{
 	uint_t children = 0;
 	nvlist_t **child;
 	uint_t i;
 
-	(void) nvlist_lookup_nvlist_array(nvroot, ZPOOL_CONFIG_CHILDREN,
-	    &child, &children);
+	(void)nvlist_lookup_nvlist_array(nvroot, ZPOOL_CONFIG_CHILDREN,
+									 &child, &children);
 
-	if (children == 0) {
+	if (children == 0)
+	{
 		char *path = zpool_vdev_name(libzfsHandle, zhp, nvroot,
-		    VDEV_NAME_PATH);
+									 VDEV_NAME_PATH);
 
 		if (strcmp(path, VDEV_TYPE_INDIRECT) != 0)
 			fnvlist_add_boolean(nv, path);
@@ -552,7 +613,8 @@ void collect_zpool_leaves(zpool_handle_t *zhp, nvlist_t *nvroot, nvlist_t *nv){
 		return;
 	}
 
-	for (i = 0; i < children; i++) {
+	for (i = 0; i < children; i++)
+	{
 		collect_zpool_leaves(zhp, child[i], nv);
 	}
 }
