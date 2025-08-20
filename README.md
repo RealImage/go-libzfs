@@ -29,14 +29,14 @@ This golang package is only used and tested on Linux.
 ## Installing
 
 ```sh
-go get github.com/bicomsystems/go-libzfs
+go get github.com/RealImage/go-libzfs
 ```
 
 ## Testing
 
 ```sh
 # On command line shell run
-cd $GOPATH/src/github.com/bicomsystems/go-libzfs
+cd $GOPATH/src/github.com/RealImage/go-libzfs
 go test
 ```
 
